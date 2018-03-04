@@ -1,5 +1,9 @@
 package bytes
 
+import (
+	"io"
+)
+
 func round8(v int) int {
 	const r = 7
 
@@ -65,6 +69,10 @@ func (rb *RingBuffer) grow(n int) error {
 
 // Write implements the io.Writer interface.
 func (rb *RingBuffer) Write(p []byte) (int, error) {
+	if p == nil || len(p) == 0 {
+		return 0, nil
+	}
+
 	len := len(p)
 	expected := len
 
@@ -74,35 +82,53 @@ func (rb *RingBuffer) Write(p []byte) (int, error) {
 		}
 	}
 
+	// no room left, return
+	if expected == 0 {
+		return 0, io.ErrShortBuffer
+	}
+
+	// Now we have enough rooms to hold the data
 	n := copy(rb.data[rb.writeOff:], p[:expected])
 	if n < expected {
-		n += copy(rb.data[:rb.readOff], p[n:expected])
+		n += copy(rb.data[:expected-n], p[n:expected])
 	}
 
 	rb.count += n
 	rb.writeOff = (rb.writeOff + n) % rb.cap
+
+	if expected < len {
+		return n, io.ErrShortBuffer
+	}
 
 	return n, nil
 }
 
 // Read implements the io.Reader interface
 func (rb *RingBuffer) Read(p []byte) (int, error) {
+	if p == nil || len(p) == 0 {
+		return 0, nil
+	}
+
+	// nothing left in buffer, return
+	if rb.count == 0 {
+		return 0, nil
+	}
+
 	expected := len(p)
-	n := 0
 
-	if rb.writeOff > rb.readOff {
-		n += copy(p, rb.data[rb.readOff:rb.writeOff])
-	} else {
-		pos := copy(p, rb.data[rb.readOff:])
-		n += pos
+	// no enough bytes in buffer, returns all left
+	if expected > rb.count {
+		expected = rb.count
+	}
 
-		if n < expected {
-			n += copy(p[pos:], rb.data[:rb.writeOff])
-		}
+	// we have make sure the buffer contains enough bytes, just do reading
+	n := copy(p, rb.data[rb.readOff:])
+	if n < expected {
+		n += copy(p[n:], rb.data[:expected-n])
 	}
 
 	rb.count -= n
-	rb.readOff += (rb.readOff + n) % rb.cap
+	rb.readOff = (rb.readOff + n) % rb.cap
 
 	return n, nil
 }
