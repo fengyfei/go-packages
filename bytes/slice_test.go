@@ -7,7 +7,7 @@ import (
 func TestSafeMakeByteSlice(t *testing.T) {
 	s, err := safeMakeByteSlice(-1)
 
-	if err != errSliceTooLarge {
+	if err != errOutOfMemory {
 		t.Fatal("slice error not captured, slice capacity:", cap(s))
 	}
 

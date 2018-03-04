@@ -3,14 +3,14 @@ package bytes
 import "errors"
 
 var (
-	errSliceTooLarge = errors.New("slice: too large size")
+	errOutOfMemory = errors.New("byte slice: not enough memory")
 )
 
 func safeMakeByteSlice(n int) (s []byte, err error) {
 	defer func() {
 		if recover() != nil {
 			s = nil
-			err = errSliceTooLarge
+			err = errOutOfMemory
 		}
 	}()
 

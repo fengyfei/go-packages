@@ -15,7 +15,7 @@ func TestFixedSizeBufferPool(t *testing.T) {
 		for i := 0; i < counts[loop]; i++ {
 			fbs[i] = pool.Get()
 
-			if fbs[i].Length() != size {
+			if fbs[i] == nil || fbs[i].Length() != size {
 				t.Fatalf("fixedSizeBufferPool %d Get failed", i)
 			}
 
@@ -29,7 +29,7 @@ func TestFixedSizeBufferPool(t *testing.T) {
 		}
 
 		another := pool.Get()
-		if another.Bytes() == nil || len(another.Bytes()) == 0 {
+		if another == nil || another.Length() != size {
 			t.Fatalf("fixedSizeBufferPool grow failed")
 		}
 

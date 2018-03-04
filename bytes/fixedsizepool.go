@@ -55,8 +55,14 @@ func NewFixedSizeBufferPool(counts, size int) *FixedSizeBufferPool {
 	return p
 }
 
-func (fbp *FixedSizeBufferPool) grow(counts int) {
+func (fbp *FixedSizeBufferPool) grow(counts int) (err error) {
 	size := fbp.size
+
+	defer func() {
+		if recover() != nil {
+			err = errOutOfMemory
+		}
+	}()
 
 	p := make([]byte, counts*size)
 	fsb := make([]FixedSizeBuffer, counts)
@@ -72,6 +78,7 @@ func (fbp *FixedSizeBufferPool) grow(counts int) {
 	}
 
 	fbp.avail += counts
+	return
 }
 
 // Get a buffer from the pool, if no buffer left, grow the pool with half of the counts.
@@ -79,7 +86,10 @@ func (fbp *FixedSizeBufferPool) Get() *FixedSizeBuffer {
 	fbp.mu.Lock()
 
 	if fbp.avail == 0 {
-		fbp.grow(fbp.counts >> 1)
+		if err := fbp.grow(fbp.counts >> 1); err != nil {
+			fbp.mu.Unlock()
+			return nil
+		}
 	}
 
 	b := fbp.free
