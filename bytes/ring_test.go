@@ -1,8 +1,8 @@
 package bytes
 
 import (
-	"fmt"
 	"testing"
+	"bytes"
 )
 
 /*func TestRound8(t *testing.T) {
@@ -24,7 +24,7 @@ import (
 	}
 }*/
 
-func TestWrite(t *testing.T) {
+/*func TestWrite(t *testing.T) {
 	rb := NewRingBuffer(7)
 
 	if rb.Cap() != 8 {
@@ -48,4 +48,34 @@ func TestWrite(t *testing.T) {
 	}
 
 	fmt.Println(rb.data)
+}*/
+
+func TestRead(t *testing.T) {
+	rb := NewRingBuffer(9)
+
+	rb.Write([]byte("abcdefg"))
+
+	buf := make([]byte, 10)
+	n, err := rb.Read(buf)
+	if err != nil {
+		t.Fatal("read: read failed:", err)
+	}
+	if n != 7 {
+		t.Fatalf("read: invalid size %d, 7 expexted, buf: %v", n, rb.data)
+	}
+	if !bytes.Equal(buf[:n], []byte("abcdefg")) {
+		t.Fatalf("read: invalid result ")
+	}
+
+	rb.Write([]byte("123456789012345"))
+	n, err = rb.Read(buf)
+	if err != nil {
+		t.Fatal("read: read failed:", err)
+	}
+	if n != 10 {
+		t.Fatalf("read: invalid size %d, 10 expexted, buf: %v", n, rb.data)
+	}
+	if !bytes.Equal(buf[:n], []byte("1234567890")) {
+		t.Fatalf("read: invalid result ")
+	}
 }
