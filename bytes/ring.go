@@ -84,3 +84,25 @@ func (rb *RingBuffer) Write(p []byte) (int, error) {
 
 	return n, nil
 }
+
+// Read implements the io.Reader interface
+func (rb *RingBuffer) Read(p []byte) (int, error) {
+	expected := len(p)
+	n := 0
+
+	if rb.writeOff > rb.readOff {
+		n += copy(p, rb.data[rb.readOff:rb.writeOff])
+	} else {
+		pos := copy(p, rb.data[rb.readOff:])
+		n += pos
+
+		if n < expected {
+			n += copy(p[pos:], rb.data[:rb.writeOff])
+		}
+	}
+
+	rb.count -= n
+	rb.readOff += (rb.readOff + n) % rb.cap
+
+	return n, nil
+}
