@@ -39,7 +39,7 @@ type FixedSizeBufferPool struct {
 // each have a byte slice length of size.
 func NewFixedSizeBufferPool(counts, size int) *FixedSizeBufferPool {
 	if counts <= 0 {
-		counts = 16
+		counts = 32
 	}
 
 	if size <= 0 {
