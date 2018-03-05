@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	errRunnerClosed = errors.New("runner: unner closed")
+	errRunnerClosed = errors.New("runner: runner closed")
 )
 
 type chanRoutineInterface interface {
